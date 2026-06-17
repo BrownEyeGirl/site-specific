@@ -65,16 +65,16 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-const COUNT = 300; // split into levels, 
+const COUNT = 200; // split into levels, 
 const SIZE = 60;
-const BOUND_RADIUS = 600;
+const BOUND_RADIUS = 300;
 
-const friendRadius = 70;
+const friendRadius = 66;
 const crowdRadius = 60;
-const coheseRadius = 30;
+const coheseRadius = 10;
 const avoidRadius = 30;
 
-const maxSpeed = 2;
+const maxSpeed = 1;
 
 const option_friend = true;
 const option_crowd = true;
@@ -269,7 +269,7 @@ bounce() {
 
 /* SCENE IN THREE.JS */
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x000000);
+scene.background = new THREE.Color(0xf);
 
 const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 1, 2000);
 camera.position.z = 800;
@@ -299,9 +299,9 @@ const boids = [];
 
 
 const systems = [
-    renderParticles(0x800080),
-    renderParticles(0x8F00FF),
-    renderParticles(0xA020F0)
+    renderParticles(60, 0x800080, 5),
+    renderParticles(50, 0x8F00FF, 3),
+    renderParticles(100, 0xA020F0, 4)
 ];
 
 
@@ -315,7 +315,7 @@ function animate() {
         updateParticles(
             system.particles,
             system.positions,
-            system.geometry
+            system.geometry, 
         );
     }
     renderer.render(scene, camera);
@@ -333,12 +333,12 @@ window.addEventListener("resize", () => {
 });
 
 
-function renderParticles(col) {
+function renderParticles(levels, col, weight) {
 
     const particles = [];
 
     const geometry = new THREE.BufferGeometry();
-    const positions = new Float32Array(COUNT * 3);
+    const positions = new Float32Array(levels * 3);
 
     geometry.setAttribute(
         "position",
@@ -346,7 +346,7 @@ function renderParticles(col) {
     );
 
     const material = new THREE.PointsMaterial({
-        size: 8,
+        size: weight,
         color: col
     });
 
@@ -383,6 +383,9 @@ function updateParticles(
     positions,
     geometry
 ) {
+
+  // 
+//if(levels != )
 
     for (let i = 0; i < particles.length; i++) {
 
