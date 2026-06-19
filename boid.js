@@ -44,10 +44,10 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const COUNT = 200; // split into levels, 
 const SIZE = 60;
-const BOUND_RADIUS = 200;
+const BOUND_RADIUS = 300;
 
-const friendRadius = 25;
-const crowdRadius = 42;
+const friendRadius = 15;
+const crowdRadius = 25;
 const coheseRadius = 30;
 const avoidRadius = 30;
 
@@ -108,7 +108,7 @@ class Boid {
     align.multiplyScalar(option_friend ? 1.2 : 0); // toggle align
     avoidDir.multiplyScalar(option_crowd ? 1 : 0); // toggle crowd avoid 
     avoidObjs.multiplyScalar(option_avoid ? 3 : 0); // strong obstacle avoid
-    noise.multiplyScalar(option_noise ? 0.3: 0); // toggle noise
+    noise.multiplyScalar(option_noise ? 0.25: 0); // toggle noise
     cohese.multiplyScalar(option_cohese ? 1 : 0);   // toggle cohesion
 
     this.vel.add(align);                            // apply align
@@ -278,10 +278,10 @@ loadFacade();
 const systems = [
     // O3
 
-    renderParticles(lastPollutants["O3"], 0xB22222, 1),
-    renderParticles(lastPollutants["SO2"], 0xFFF, 0.8),
-    renderParticles(lastPollutants["NO2"], 0xA020F0, 0.6), 
-    renderParticles(lastPollutants["PM2.5"], 0xfff, 0.4)
+    renderParticles(lastPollutants["O3"], 0xFFFFFF, 1),
+    renderParticles(lastPollutants["SO2"], 0xFFFF, 3),
+    renderParticles(lastPollutants["NO2"], 0xFFFF, 1), 
+    renderParticles(lastPollutants["PM2.5"], 0xfff, 1)
 ];
 
 
@@ -450,9 +450,9 @@ async function loadFacade() {
         const facade = gltf.scene; 
 
         facade.scale.set(20,20,20)
-        facade.position.set(0, 0, -10)
+        facade.position.set(0, -100, -40)
         scene.add(facade)
-        //maxSpeed = 0.2
+        
     
     }); 
 
@@ -461,6 +461,10 @@ async function loadFacade() {
 /* UPDATE POLLUTANTS */ 
 async function updatePollutants() {
     lastPollutants = { ...pollutants };
+
+   // maxSpeed = (Math.random()+0.7)*1.5
+
+
     try {
         const response = await fetch(
             "https://donnees.montreal.ca/api/3/action/datastore_search?resource_id=f4eca3bf-5ded-4d3c-a8dc-ed42486498f3&limit=100"
