@@ -3,11 +3,38 @@
   <head>
     <meta charset="utf-8">
     <title>CONTAMINATION</title>
-    <style>
-      body { margin: 0; }
-    </style>
 
 <style rel="stylesheet" href="style.css"></style>
+<style>
+  body { 
+    margin: 0;
+    cursor: pointer;
+   }
+
+  .ui-overlay {
+   position: absolute; /* Pulls the div out of normal layout flow */
+  color: white;
+  
+
+  width: 400px; 
+  margin: 40px; 
+
+  font-family: "Jost", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 300;
+  font-style: normal;
+}
+
+
+</style>
+
+<!-- FONTS -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+
+
+
   <script type="importmap">
 {
   "imports": {
@@ -21,7 +48,11 @@
 <script src="https://threejs.org/build/three.min.js"></script>
  <script type="module" src="boid.js" id="appScript"></script>
 </head>
-  <body style="background-color: black;">
-    
+  <body style="background-color: white;">
+    <div class="ui-overlay" >
+      <h1>CONTAMINATION: </h1>
+      <p>/noun/ <br>/noun/ making something unfit for use by the introduction of undesirable elements
+</p>
+    </div>
   </body>
 </html>

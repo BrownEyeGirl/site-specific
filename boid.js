@@ -9,7 +9,7 @@
 
 
 /* TITLE */ 
-// 1. Create the new element (e.g., a paragraph)
+/* 1. Create the new element (e.g., a paragraph)
 const txt = document.createElement('p');
 
 // 2. Add text content safely (prevents HTML injection)
@@ -21,7 +21,7 @@ txt.style.color = 'white'
 
 
 // 3. Append the element to the body
-document.body.appendChild(txt);
+document.body.appendChild(txt);*/
 
 
 
@@ -46,17 +46,22 @@ import * as THREE from "three";
 
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { PLYLoader } from 'three/addons/loaders/PLYLoader.js'
+
+// effects
+import { AnaglyphEffect } from 'https://cdn.jsdelivr.net/npm/three@latest/examples/jsm/effects/AnaglyphEffect.js';
+
 
 const COUNT = 200; // split into levels, 
 const SIZE = 60;
 const BOUND_RADIUS = 200;
 
 const friendRadius = 20;;
-const crowdRadius = 20;
-const coheseRadius = 2;
+const crowdRadius = 30;
+const coheseRadius = 20;
 const avoidRadius = 60;
 
-let maxSpeed = 2;
+let maxSpeed = 1;
 
 const option_friend = true;
 const option_crowd = true;
@@ -64,6 +69,12 @@ const option_avoid = true;
 const option_noise = true;
 const option_cohese = true;
 
+// avoid mouse
+const mouse = new THREE.Vector2();
+const raycaster = new THREE.Raycaster();
+
+const mouseWorld = new THREE.Vector3();
+const plane = new THREE.Plane(new THREE.Vector3(0,0,1), 0);
 
 
 /* BOID CLASS */
@@ -82,7 +93,7 @@ class Boid {
     this.thinkTimer = Math.floor(Math.random() * 10);
   }
 
-  go(boids, avoids) {
+  go(boids, avoids, mouse) {
 
     this.increment();
     this.bounce();
@@ -91,12 +102,12 @@ class Boid {
       this.getFriends(boids);
     }
 
-    this.flock(avoids);
+    this.flock(avoids, mouse);
 
     this.pos.add(this.vel);
   }
 
-  flock(avoids, m) {
+  flock(avoids, mouse) {
 
     const align = this.getAverageDir(); // match neighbors direction
     const avoidDir = this.getAvoidDir(); // avoid crowding
@@ -113,7 +124,7 @@ class Boid {
     align.multiplyScalar(option_friend ? 0.2 : 0); // toggle align
     avoidDir.multiplyScalar(option_crowd ? 0.5 : 0); // toggle crowd avoid 
     avoidObjs.multiplyScalar(option_avoid ? 3 : 0); // strong obstacle avoid
-    noise.multiplyScalar(option_noise ? 0.25: 0); // toggle noise
+    noise.multiplyScalar(option_noise ? 0: 0); // toggle noise
     cohese.multiplyScalar(option_cohese ? 0.2 : 0);   // toggle cohesion
 
     this.vel.add(align);                            // apply align
@@ -126,10 +137,15 @@ class Boid {
       this.vel.setLength(maxSpeed);
     }
 
+    const mouseForce = this.getMouseForce(mouse);
+
+    mouseForce.multiplyScalar(0.5);
+
+    this.vel.add(mouseForce);
+
     const centerForce = this.getCenterForce();
 
     this.vel.add(centerForce);
-
     
 }
 
@@ -190,6 +206,28 @@ class Boid {
     return steer;
   }
 
+  getMouseForce(mouse){
+
+    const dir = mouse.clone()
+        .sub(this.pos);
+
+
+    const dist = dir.length();
+
+
+    if(dist < 100){
+
+        dir.normalize();
+
+        // push away
+        return dir.negate()
+            .multiplyScalar(
+                100/dist
+            );
+    }
+    return new THREE.Vector3();
+}
+
 getAvoidAvoids(avoids) {
     const steer = new THREE.Vector3();
 
@@ -231,7 +269,7 @@ getAvoidAvoids(avoids) {
   getCenterForce() {
     return this.pos.clone()
         .negate()          // vector toward center
-        .multiplyScalar(0.0005);
+        .multiplyScalar(0.0002);
 }
 
 /* WORLD */
@@ -262,7 +300,7 @@ bounce() {
 
 /* SCENE IN THREE.JS */
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x000000);
+scene.background = new THREE.Color(0x000435);
 
 const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 1, 2000);
 camera.position.z = 300;
@@ -274,9 +312,21 @@ document.body.appendChild(renderer.domElement);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.autoRotate= true; 
 
+/* EFFECTS */ 
+let anaglyph = new AnaglyphEffect( renderer );
+anaglyph.setSize( window.innerWidth, window.innerHeight );
+
+// Configure stereo parameters for physically-correct rendering
+// eyeSep: interpupillary distance (default 0.064m / 64mm for humans)
+// planeDistance: distance to the zero-parallax plane (objects here appear at screen depth)
+anaglyph.eyeSep = 0.05;
+anaglyph.planeDistance = 15; // Match camera distance to origin for zero parallax at scene center
+
+
 
 /* LOAD IN MODELS */
 loadFacade(); 
+//loadFacadePoints(); 
 
 
 /* LOAD IN PARTICLES */
@@ -290,6 +340,22 @@ const systems = [
 ];
 
 
+window.addEventListener("mousemove", (event)=>{
+
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+
+    raycaster.setFromCamera(mouse, camera);
+
+
+    // intersect with Z=0 plane
+    raycaster.ray.intersectPlane(
+        plane,
+        mouseWorld
+    );
+
+});
 
 /* ANIMATE */
 const radius = 50;
@@ -312,6 +378,8 @@ function animate() {
 
 
     renderer.render(scene, camera);
+    // anaglyph (replace renderer)
+    anaglyph.render( scene, camera );
 
 }
 
@@ -384,7 +452,7 @@ function updateParticles(
 
         const b = particles[i];
 
-        b.go(particles, []);
+        b.go(particles, [], mouseWorld);
 
         positions[i * 3]     = b.pos.x;
         positions[i * 3 + 1] = b.pos.y;
@@ -462,11 +530,30 @@ async function loadFacade() {
     const loader = new GLTFLoader();
 
     // facade 
-    loader.load("items/lidar_316_bridgeSt.gltf", function(gltf) {
+    loader.load("lidar_316_bridgeSt.gltf", function(gltf) {
         const facade = gltf.scene; 
 
         facade.scale.set(20,20,20)
         facade.position.set(0, -100, -40)
+        scene.add(facade)
+        
+    
+    }); 
+
+}
+
+/* LOAD IN LIDAR SCAN */ 
+async function loadFacadePoints() {
+    const loader = new GLTFLoader();
+
+    // facade 
+    loader.load("items/316_Bridge_St_PointGLB/316_Bridge_St_Point_Scan_08_58_02.gltf", function(gltf) {
+        const facade = gltf.scene; 
+
+        facade.scale.set(10,10,10)
+        facade.position.set(200, 0, -100)
+         facade.rotation.x = Math.PI / 2;
+
         scene.add(facade)
         
     

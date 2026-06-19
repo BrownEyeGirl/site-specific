@@ -1,0 +1,12 @@
+
+
+.ui-overlay {
+   position: absolute; /* Pulls the div out of normal layout flow */
+  color: white;
+  
+  /* Optional: Center any text inside the overlay */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+}
