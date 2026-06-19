@@ -10,13 +10,18 @@
 
 /* TITLE */ 
 // 1. Create the new element (e.g., a paragraph)
-const newParagraph = document.createElement('p');
+const txt = document.createElement('p');
 
 // 2. Add text content safely (prevents HTML injection)
-newParagraph.textContent = 'Contamination';
+txt.textContent = 'Contamination';
+txt.textContent = 'Contamination';
+
+txt.style.position = 'relative'
+txt.style.color = 'white'
+
 
 // 3. Append the element to the body
-document.body.appendChild(newParagraph);
+document.body.appendChild(txt);
 
 
 
@@ -44,12 +49,12 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const COUNT = 200; // split into levels, 
 const SIZE = 60;
-const BOUND_RADIUS = 300;
+const BOUND_RADIUS = 200;
 
-const friendRadius = 15;
-const crowdRadius = 25;
-const coheseRadius = 30;
-const avoidRadius = 30;
+const friendRadius = 20;;
+const crowdRadius = 20;
+const coheseRadius = 2;
+const avoidRadius = 60;
 
 let maxSpeed = 2;
 
@@ -57,7 +62,7 @@ const option_friend = true;
 const option_crowd = true;
 const option_avoid = true;
 const option_noise = true;
-const option_cohese = false;
+const option_cohese = true;
 
 
 
@@ -105,11 +110,11 @@ class Boid {
     const cohese = this.getCohesion(); // move toward group
 
     // (these only occur if the variable option is declared true at the top)
-    align.multiplyScalar(option_friend ? 1.2 : 0); // toggle align
-    avoidDir.multiplyScalar(option_crowd ? 1 : 0); // toggle crowd avoid 
+    align.multiplyScalar(option_friend ? 0.2 : 0); // toggle align
+    avoidDir.multiplyScalar(option_crowd ? 0.5 : 0); // toggle crowd avoid 
     avoidObjs.multiplyScalar(option_avoid ? 3 : 0); // strong obstacle avoid
     noise.multiplyScalar(option_noise ? 0.25: 0); // toggle noise
-    cohese.multiplyScalar(option_cohese ? 1 : 0);   // toggle cohesion
+    cohese.multiplyScalar(option_cohese ? 0.2 : 0);   // toggle cohesion
 
     this.vel.add(align);                            // apply align
     this.vel.add(avoidDir);                         // apply crowd avoid
@@ -226,7 +231,7 @@ getAvoidAvoids(avoids) {
   getCenterForce() {
     return this.pos.clone()
         .negate()          // vector toward center
-        .multiplyScalar(0.001);
+        .multiplyScalar(0.0005);
 }
 
 /* WORLD */
@@ -287,14 +292,25 @@ const systems = [
 
 
 /* ANIMATE */
+const radius = 50;
+let angle = 0;
+
 function animate() {
   requestAnimationFrame(animate);
 
+  // camera
+  angle += 0.005;
+
+  camera.position.x = Math.cos(angle) * radius;
+  camera.position.y = Math.sin(angle) * radius;
+  camera.lookAt(0,0,0)
 
   // animate 
  for (const system of systems) {
     updateParticles(system);
   }
+
+
     renderer.render(scene, camera);
 
 }
