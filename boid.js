@@ -26,7 +26,7 @@ document.body.appendChild(newParagraph);
 const s = "06"; // from station 6
 let pollutants = {O3: 0,SO2: 0,NO2: 0,"PM2.5": 0}; // some default standards 
 let lastPollutants = {O3: 0,SO2: 0,NO2: 0,"PM2.5": 0};  // some default standards 
-const inflation = 10; //how much the pollutants are scaled 
+const inflation = 30; //how much the pollutants are scaled 
 
 setInterval(
     updatePollutants,
@@ -47,7 +47,7 @@ const SIZE = 60;
 const BOUND_RADIUS = 200;
 
 const friendRadius = 25;
-const crowdRadius = 20;
+const crowdRadius = 42;
 const coheseRadius = 30;
 const avoidRadius = 30;
 
@@ -108,7 +108,7 @@ class Boid {
     align.multiplyScalar(option_friend ? 1.2 : 0); // toggle align
     avoidDir.multiplyScalar(option_crowd ? 1 : 0); // toggle crowd avoid 
     avoidObjs.multiplyScalar(option_avoid ? 3 : 0); // strong obstacle avoid
-    noise.multiplyScalar(option_noise ? 0.1: 0); // toggle noise
+    noise.multiplyScalar(option_noise ? 0.3: 0); // toggle noise
     cohese.multiplyScalar(option_cohese ? 1 : 0);   // toggle cohesion
 
     this.vel.add(align);                            // apply align
@@ -120,6 +120,10 @@ class Boid {
     if (this.vel.length() > maxSpeed) {             // limit speed
       this.vel.setLength(maxSpeed);
     }
+
+    const centerForce = this.getCenterForce();
+
+    this.vel.add(centerForce);
 
     
 }
@@ -181,7 +185,7 @@ class Boid {
     return steer;
   }
 
-  getAvoidAvoids(avoids) {
+getAvoidAvoids(avoids) {
     const steer = new THREE.Vector3();
 
     for (const o of avoids) {
@@ -219,6 +223,12 @@ class Boid {
     return sum.sub(this.pos).multiplyScalar(0.05);
   }
 
+  getCenterForce() {
+    return this.pos.clone()
+        .negate()          // vector toward center
+        .multiplyScalar(0.001);
+}
+
 /* WORLD */
 bounce() {
 
@@ -250,7 +260,7 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000);
 
 const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 1, 2000);
-camera.position.z = 800;
+camera.position.z = 300;
 
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(innerWidth, innerHeight);
@@ -276,10 +286,10 @@ const systems = [
 
 
 
-
 /* ANIMATE */
 function animate() {
   requestAnimationFrame(animate);
+
 
   // animate 
  for (const system of systems) {
@@ -328,9 +338,9 @@ function renderParticles(levels, col, weight) {
 
         particles.push(
             new Boid(
-                (Math.random() - 0.5) * SIZE,
-                (Math.random() - 0.5) * SIZE,
-                (Math.random() - 0.5) * SIZE
+                (Math.random() - 0.5) ,
+                (Math.random() - 0.5) ,
+                (Math.random() - 0.5) 
             )
         );
     }
@@ -548,3 +558,4 @@ async function updatePollutants() {
 
     
 }
+
