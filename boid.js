@@ -35,7 +35,7 @@ const inflation = 30; //how much the pollutants are scaled
 
 setInterval(
     updatePollutants,
-    60 * 10
+    60 * 100
 );
 
 
@@ -50,6 +50,9 @@ import { PLYLoader } from 'three/addons/loaders/PLYLoader.js'
 
 // effects
 import { AnaglyphEffect } from 'https://cdn.jsdelivr.net/npm/three@latest/examples/jsm/effects/AnaglyphEffect.js';
+
+// perlin noise 
+import { createNoise2D } from "https://cdn.skypack.dev/simplex-noise";
 
 
 const COUNT = 200; // split into levels, 
@@ -300,7 +303,13 @@ bounce() {
 
 /* SCENE IN THREE.JS */
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x000435);
+scene.background = new THREE.Color(0x000080);
+
+
+/* AMBIENT LIGHT FOR THE FLOWER FIELD */ 
+const light = new THREE.AmbientLight( 0x00FF59, 1 ); // soft white light
+light.distance = 500; 
+scene.add( light );
 
 const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 1, 2000);
 camera.position.z = 300;
@@ -312,6 +321,9 @@ document.body.appendChild(renderer.domElement);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.autoRotate= true; 
 
+controls.minDistance = 10;   // How close you can zoom in
+controls.maxDistance = 300;  // How far you can zoom out
+
 /* EFFECTS */ 
 let anaglyph = new AnaglyphEffect( renderer );
 anaglyph.setSize( window.innerWidth, window.innerHeight );
@@ -319,13 +331,20 @@ anaglyph.setSize( window.innerWidth, window.innerHeight );
 // Configure stereo parameters for physically-correct rendering
 // eyeSep: interpupillary distance (default 0.064m / 64mm for humans)
 // planeDistance: distance to the zero-parallax plane (objects here appear at screen depth)
-anaglyph.eyeSep = 0.05;
-anaglyph.planeDistance = 15; // Match camera distance to origin for zero parallax at scene center
+anaglyph.eyeSep = 0.2;
+anaglyph.planeDistance = 24; // Match camera distance to origin for zero parallax at scene center
+
+
+/* PRECURSOR FOR FLOWERS */ 
+const flowers = []; 
 
 
 
 /* LOAD IN MODELS */
 loadFacade(); 
+createWildFlowers("flowers/sunflower/scene.gltf", 150);  // ukrane/polish 
+createWildFlowers("flowers/bluebell/scene.gltf", 750);  // ukrane/polish 
+
 //loadFacadePoints(); 
 
 
@@ -364,6 +383,8 @@ let angle = 0;
 function animate() {
   requestAnimationFrame(animate);
 
+  //zoomOut(); 
+
   // camera
   angle += 0.005;
 
@@ -382,6 +403,9 @@ function animate() {
     anaglyph.render( scene, camera );
 
 }
+
+/* INTERVAL, zoom out every 5 minutes */ 
+
 
 animate();
 
@@ -533,7 +557,7 @@ async function loadFacade() {
     loader.load("lidar_316_bridgeSt.gltf", function(gltf) {
         const facade = gltf.scene; 
 
-        facade.scale.set(20,20,20)
+        facade.scale.set(40,40,40)
         facade.position.set(0, -100, -40)
         scene.add(facade)
         
@@ -666,3 +690,79 @@ async function updatePollutants() {
     
 }
 
+
+
+function zoomOut() {
+  camera.position.setLength(200); 
+}
+
+
+/* PERLIN NOISE FOR FLOWERS */ 
+function createWildFlowers(url, c) {
+
+    const noise2D = createNoise2D();
+    const loader = new GLTFLoader();
+
+    loader.load(url, (gltf) => {
+
+        let flowerMesh = null;
+
+        gltf.scene.traverse((obj) => {
+            if (obj.isMesh && !flowerMesh) {
+                flowerMesh = obj;
+            }
+        });
+
+        if (!flowerMesh) {
+            console.error("No mesh found in flower model.");
+            return;
+        }
+
+        const count = c;
+        const size = 800;
+
+        const flowers = new THREE.InstancedMesh(
+            flowerMesh.geometry,
+            flowerMesh.material,
+            count
+        );
+
+        flowers.castShadow = true;
+        flowers.receiveShadow = true;
+
+        const dummy = new THREE.Object3D();
+
+        let index = 0;
+
+        while (index < count) {
+
+            const x = (Math.random() - 0.5) * size;
+            const z = (Math.random() - 0.5) * size;
+
+            const n = noise2D(x * 0.03, z * 0.03);
+
+            if (n > 0.1) {
+
+                dummy.position.set(x, -100, z);
+
+                const s = 15 + Math.random() * 0.6;
+                dummy.scale.set(s, s, s);
+
+                dummy.rotation.x =  -Math.PI * 0.5;
+                //dummy.rotation.y = -Math.PI ;
+
+                dummy.updateMatrix();
+
+                flowers.setMatrixAt(index, dummy.matrix);
+
+                index++;
+            }
+        }
+
+        flowers.instanceMatrix.needsUpdate = true;
+
+        scene.add(flowers);
+
+        console.log(`Created ${count} flower instances`);
+    });
+}

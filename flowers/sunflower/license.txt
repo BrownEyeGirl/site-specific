@@ -1,0 +1,8 @@
+Model Information:
+* title:	Sunflower
+* source:	https://sketchfab.com/3d-models/sunflower-3a09a0a4b6ed444c9228707c1cd4f7b7
+* author:	Beeptea (https://sketchfab.com/beeptea)
+
+Model License:
+* license type:	SKETCHFAB Standard (https://sketchfab.com/licenses)
+* requirements:	Under basic restrictions, use worldwide, on all types of media, commercially or not, and in all types of derivative works
