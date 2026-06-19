@@ -8,55 +8,32 @@
  */
 
 
+/* TITLE */ 
+// 1. Create the new element (e.g., a paragraph)
+const newParagraph = document.createElement('p');
+
+// 2. Add text content safely (prevents HTML injection)
+newParagraph.textContent = 'Contamination';
+
+// 3. Append the element to the body
+document.body.appendChild(newParagraph);
+
+
+
 /* AIR DATA */ 
 // update every minute
-setInterval(
-    updatePollutants,
-    60 * 1000 
-);
-
 // get pollutants 
 const s = "06"; // from station 6
-let pollutants = {};
-async function updatePollutants() {
+let pollutants = {O3: 0,SO2: 0,NO2: 0,"PM2.5": 0}; // some default standards 
+let lastPollutants = {O3: 0,SO2: 0,NO2: 0,"PM2.5": 0};  // some default standards 
+const inflation = 10; //how much the pollutants are scaled 
 
-    try {
+setInterval(
+    updatePollutants,
+    60 * 10
+);
 
-        const response = await fetch(
-            "https://donnees.montreal.ca/api/3/action/datastore_search?resource_id=f4eca3bf-5ded-4d3c-a8dc-ed42486498f3&limit=100"
-        );
 
-        const data = await response.json();
-
-        pollutants = {};
-
-        data.result.records
-            .filter(
-                record =>
-                    record.stationId === s
-            )
-            .forEach(record => {
-
-                pollutants[
-                    record.pollutant
-                ] = Number(
-                    record.valeur
-                );
-            });
-
-        console.log(
-            "updated:",
-            pollutants
-        );
-
-    } catch (error) {
-
-        console.error(
-            "pollutant fetch failed:",
-            error
-        );
-    }
-}
 
 
 /* VISUAL SYSTEM */ 
@@ -67,20 +44,22 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const COUNT = 200; // split into levels, 
 const SIZE = 60;
-const BOUND_RADIUS = 300;
+const BOUND_RADIUS = 200;
 
-const friendRadius = 66;
-const crowdRadius = 60;
-const coheseRadius = 10;
+const friendRadius = 25;
+const crowdRadius = 20;
+const coheseRadius = 30;
 const avoidRadius = 30;
 
-const maxSpeed = 1;
+let maxSpeed = 2;
 
 const option_friend = true;
 const option_crowd = true;
 const option_avoid = true;
 const option_noise = true;
 const option_cohese = false;
+
+
 
 /* BOID CLASS */
 class Boid {
@@ -261,7 +240,6 @@ bounce() {
     this.vel.multiplyScalar(0.9);
   }
 }
-
   increment() {
     this.thinkTimer = (this.thinkTimer + 1) % 5;
   }
@@ -269,7 +247,7 @@ bounce() {
 
 /* SCENE IN THREE.JS */
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xf);
+scene.background = new THREE.Color(0x000000);
 
 const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 1, 2000);
 camera.position.z = 800;
@@ -281,28 +259,21 @@ document.body.appendChild(renderer.domElement);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.autoRotate= true; 
 
-/* BOIDS */
-const boids = [];
-
-
 
 /* LOAD IN MODELS */
-//loadFacade(); 
-
-/* PARTICLES */
+loadFacade(); 
 
 
-
-//renderParticles(boids, 0xffff); 
-//renderParticles(particlesCO, 0xffff); 
-
-
-
+/* LOAD IN PARTICLES */
 const systems = [
-    renderParticles(60, 0x800080, 5),
-    renderParticles(50, 0x8F00FF, 3),
-    renderParticles(100, 0xA020F0, 4)
+    // O3
+
+    renderParticles(lastPollutants["O3"], 0xB22222, 1),
+    renderParticles(lastPollutants["SO2"], 0xFFF, 0.8),
+    renderParticles(lastPollutants["NO2"], 0xA020F0, 0.6), 
+    renderParticles(lastPollutants["PM2.5"], 0xfff, 0.4)
 ];
+
 
 
 
@@ -312,12 +283,8 @@ function animate() {
 
   // animate 
  for (const system of systems) {
-        updateParticles(
-            system.particles,
-            system.positions,
-            system.geometry, 
-        );
-    }
+    updateParticles(system);
+  }
     renderer.render(scene, camera);
 
 }
@@ -378,14 +345,14 @@ function renderParticles(levels, col, weight) {
 }
 
 
+/* UPDATE PARTICLE SYSTEM */ 
 function updateParticles(
-    particles,
-    positions,
-    geometry
+    system
 ) {
 
-  // 
-//if(levels != )
+    const particles = system.particles;
+    const positions = system.positions;
+    const geometry = system.geometry;
 
     for (let i = 0; i < particles.length; i++) {
 
@@ -399,8 +366,69 @@ function updateParticles(
     }
 
     geometry.attributes.position.needsUpdate = true;
+
+
+
 }
 
+
+/* ADD PARTICLE IF AMOUNT CHANGES */ 
+function addParticles(system, count) {
+
+    for (let i = 0; i < count; i++) {
+        system.particles.push(
+            new Boid(
+                (Math.random() - 0.5) * SIZE,
+                (Math.random() - 0.5) * SIZE,
+                (Math.random() - 0.5) * SIZE
+            )
+        );
+    }
+
+    const newPositions = new Float32Array(
+        system.particles.length * 3
+    );
+
+    newPositions.set(system.positions);
+    system.positions = newPositions;
+
+    system.geometry.setAttribute(
+        "position",
+        new THREE.BufferAttribute(
+            system.positions,
+            3
+        )
+    );
+}
+
+
+/* REMOVE PARTICLES */ 
+function removeParticles(system, count) {
+
+    // Don't remove more than exist
+    count = Math.min(count, system.particles.length);
+
+    // Remove from the end
+    system.particles.splice(
+        system.particles.length - count,
+        count
+    );
+
+    // Create smaller position buffer
+    const newPositions = new Float32Array(
+        system.particles.length * 3
+    );
+
+    system.positions = newPositions;
+
+    system.geometry.setAttribute(
+        "position",
+        new THREE.BufferAttribute(
+            system.positions,
+            3
+        )
+    );
+}
 
 
 /* LOAD IN LIDAR SCAN */ 
@@ -408,13 +436,115 @@ async function loadFacade() {
     const loader = new GLTFLoader();
 
     // facade 
-    loader.load("items/house_test/scene.gltf", function(gltf) {
+    loader.load("items/lidar_316_bridgeSt.gltf", function(gltf) {
         const facade = gltf.scene; 
 
-        facade.scale.set(10,10,10)
+        facade.scale.set(20,20,20)
         facade.position.set(0, 0, -10)
         scene.add(facade)
+        //maxSpeed = 0.2
     
     }); 
 
+}
+
+/* UPDATE POLLUTANTS */ 
+async function updatePollutants() {
+    lastPollutants = { ...pollutants };
+    try {
+        const response = await fetch(
+            "https://donnees.montreal.ca/api/3/action/datastore_search?resource_id=f4eca3bf-5ded-4d3c-a8dc-ed42486498f3&limit=100"
+        );
+
+        const data = await response.json();
+
+
+        data.result.records
+            .filter(
+                record =>
+                    record.stationId === s
+            )
+            .forEach(record => {
+
+                pollutants[
+                    record.pollutant
+                ] = Number(
+                    record.valeur
+                );
+            });
+
+          /*console.log(
+              "updated:",
+              pollutants
+          );
+*/
+          console.log(
+            "last pollutants", 
+            lastPollutants,
+            "pollutants", 
+            pollutants
+          )
+
+    } catch (error) {
+
+        console.error(
+            "pollutant fetch failed:",
+            error
+        );
+    }
+
+    /* UPDATE PARTICLES */ 
+
+    // check O3 levels
+    if(pollutants["O3"] != lastPollutants["O3"]) {
+      if(pollutants["O3"] > lastPollutants["O3"]) { 
+        addParticles(systems[0], (Math.abs(lastPollutants["O3"] - pollutants["O3"])*inflation)) 
+        console.log((Math.abs(lastPollutants["O3"] - pollutants["O3"])*inflation) + " o3 particles added. ")
+      }
+      else {
+        removeParticles(systems[0], (Math.abs(lastPollutants["O3"] - pollutants["O3"])*inflation)) 
+        console.log((Math.abs(lastPollutants["O3"] - pollutants["O3"])*inflation) + " o3 particles removed. ")
+      }
+    }
+
+    // check SO2 levels
+    if(pollutants["SO2"] != lastPollutants["SO2"]) {
+      if(pollutants["SO2"] > lastPollutants["SO2"]) { 
+        addParticles(systems[1], (Math.abs(lastPollutants["SO2"] - pollutants["SO2"])*inflation)) 
+        console.log((Math.abs(lastPollutants["SO2"] - pollutants["SO2"])*inflation) + " SO2 particles added. ")
+      }
+      else {
+        removeParticles(systems[1], (Math.abs(lastPollutants["SO2"] - pollutants["SO2"])*inflation)) 
+        console.log((Math.abs(lastPollutants["SO2"] - pollutants["SO2"])*inflation) + " SO2 particles removed. ")
+      }
+    }
+
+
+    // check NO2 levels
+    if(pollutants["NO2"] != lastPollutants["NO2"]) {
+      if(pollutants["NO2"] > lastPollutants["NO2"]) { 
+        addParticles(systems[2], (Math.abs(lastPollutants["NO2"] - pollutants["NO2"])*inflation)) 
+        console.log((Math.abs(lastPollutants["NO2"] - pollutants["NO2"])*inflation) + " NO2 particles added. ")
+      }
+      else {
+        removeParticles(systems[2], (Math.abs(lastPollutants["NO2"] - pollutants["NO2"])*inflation)) 
+        console.log((Math.abs(lastPollutants["NO2"] - pollutants["NO2"])*inflation) + " NO2 particles removed. ")
+      }
+    }
+
+    // check PM2.5 levels
+    if(pollutants["PM2.5"] != lastPollutants["PM2.5"] ) {
+      if(9999 > pollutants["PM2.5"] > lastPollutants["PM2.5"] > -9999) { 
+        addParticles(systems[3], (Math.abs(lastPollutants["PM2.5"] - pollutants["PM2.5"])*inflation)) 
+        console.log((Math.abs(lastPollutants["PM2.5"] - pollutants["PM2.5"])*inflation) + " PM2.5 particles added. ")
+      }
+
+      else if(pollutants["PM2.5"] > lastPollutants["PM2.5"]) {
+        removeParticles(systems[3], (Math.abs(lastPollutants["PM2.5"] - pollutants["PM2.5"])*inflation)) 
+        console.log((Math.abs(lastPollutants["PM2.5"] - pollutants["PM2.5"])*inflation) + " NO2 particles removed. ")
+      }
+
+    }
+
+    
 }
