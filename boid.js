@@ -1,31 +1,16 @@
 /**
- * 
+ * "CONTAMINATION" By Skyla Trousdale 
  * 
  * 
  * CREDITS: 
  * flocking code derived from https://github.com/jackaperkins/boids/blob/master/Boid.pde
- * flowers1: https://sketchfab.com/3d-models/linen-with-flowers-91c24ace2e7d412493299f43dfa0061f
  * daisy: https://sketchfab.com/3d-models/flower-0a0f5b4e595940649ea3cabeb7a4b1e1
  * clover: https://sketchfab.com/3d-models/low-poly-shrub-or-grass-clover-acb337dd8f5e41beba654111e3f2475a
  * lily: https://sketchfab.com/3d-models/low-poly-flowers-96a8320dd0e24ab8b2e7d2712eb66b64
  * sunflower: https://sketchfab.com/3d-models/sunflower-low-poly-0615fb09b7cd424d99d89f7c6e35eec3#download
+ * 
  */
 
-
-/* TITLE */ 
-/* 1. Create the new element (e.g., a paragraph)
-const txt = document.createElement('p');
-
-// 2. Add text content safely (prevents HTML injection)
-txt.textContent = 'Contamination';
-txt.textContent = 'Contamination';
-
-txt.style.position = 'relative'
-txt.style.color = 'white'
-
-
-// 3. Append the element to the body
-document.body.appendChild(txt);*/
 
 
 
@@ -41,7 +26,6 @@ setInterval(
     updatePollutants,
     60 * 100
 );
-
 
 
 
@@ -63,12 +47,12 @@ const COUNT = 200; // split into levels,
 const SIZE = 60;
 const BOUND_RADIUS = 200;
 
-const friendRadius = 20;;
+const friendRadius = 30;;
 const crowdRadius = 30;
 const coheseRadius = 20;
-const avoidRadius = 60;
+const avoidRadius = 90;
 
-let maxSpeed = 1;
+let maxSpeed = 1.25;
 
 const option_friend = true;
 const option_crowd = true;
@@ -311,7 +295,7 @@ scene.background = new THREE.Color(0x000080);
 
 
 /* AMBIENT LIGHT FOR THE FLOWER FIELD */ 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 10);
+const directionalLight = new THREE.DirectionalLight(0xFFD1DC, 10);
 directionalLight.position.set(5, 10, 7.5);
 scene.add(directionalLight);
 
@@ -339,41 +323,33 @@ anaglyph.eyeSep = 0.2;
 anaglyph.planeDistance = 24; // Match camera distance to origin for zero parallax at scene center
 
 
-/* PRECURSOR FOR FLOWERS */ 
-const flowers = []; 
-
-
-
 /* LOAD IN MODELS */
 loadFacade(); 
 
-// flowers : link, amount, size
+
 /** FLOWERS
  * breakdown: 
  * italian -> 750, lily (model has 4),  188 generated
  * british/irish -> 375, shamrock (model has 12), 31 generated
  * french can -> 225, daisy (3 flowers per model), 75 generated
  * polish/ukraine -> 150
+ * 
+ * flowers function form : link, amount, size
  */
+const flowers = []; 
+
 createWildFlowers("flowers/lily.glb", 188, 130); // italian
 createWildFlowers("flowers/clover.glb", 31, 90); // british/irish
 createWildFlowers("flowers/daisy.glb", 75, 0.4); // french can 
 createWildFlowers("flowers/sunflower.glb", 150, 37);  // polish/ukrain
 
 
-
-
-//loadFacadePoints(); 
-
-
 /* LOAD IN PARTICLES */
 const systems = [
-    // O3
-
-    renderParticles(lastPollutants["O3"], 0xFFFFFF, 1),
+    renderParticles(lastPollutants["O3"], 0xFFFFFF, 1), // function form: pollutant, color, size
     renderParticles(lastPollutants["SO2"], 0xFFFF, 3),
-    renderParticles(lastPollutants["NO2"], 0xFFFF, 1), 
-    renderParticles(lastPollutants["PM2.5"], 0xfff, 1)
+    renderParticles(lastPollutants["NO2"], 0xFFFF, 2), 
+    renderParticles(lastPollutants["PM2.5"], 0xfff, 1.5)
 ];
 
 
@@ -422,8 +398,7 @@ function animate() {
 
 }
 
-/* INTERVAL, zoom out every 5 minutes */ 
-
+/* INTERVAL, zoom out every 5 minutes (not in use)  */ 
 
 animate();
 
@@ -436,9 +411,10 @@ window.addEventListener("resize", () => {
 });
 
 
+/* INITIALLY GENERATE PARTICLES */ 
 function renderParticles(levels, col, weight) {
 
-    const particles = [];
+    const particles = []; // creates a new function specific collectin of particles 
 
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(levels * 3);
