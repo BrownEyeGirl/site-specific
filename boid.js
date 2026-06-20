@@ -20,7 +20,7 @@
 const s = "06"; // from station 6
 let pollutants = {O3: 0,SO2: 0,NO2: 0,"PM2.5": 0}; // some default standards 
 let lastPollutants = {O3: 0,SO2: 0,NO2: 0,"PM2.5": 0};  // some default standards 
-const inflation = 30; //how much the pollutants are scaled 
+const inflation = 50; //how much the pollutants are scaled 
 
 setInterval(
     updatePollutants,
@@ -43,9 +43,9 @@ import { AnaglyphEffect } from 'https://cdn.jsdelivr.net/npm/three@latest/exampl
 import { createNoise2D } from "https://cdn.skypack.dev/simplex-noise";
 
 
-const COUNT = 200; // split into levels, 
+const COUNT = 100; // split into levels, 
 const SIZE = 60;
-const BOUND_RADIUS = 200;
+const BOUND_RADIUS = 300;
 
 const friendRadius = 30;;
 const crowdRadius = 30;
@@ -461,13 +461,12 @@ function renderParticles(levels, col, weight) {
 function updateParticles(
     system
 ) {
-
     const particles = system.particles;
     const positions = system.positions;
     const geometry = system.geometry;
 
+    // get particles neightbors, traj, etc and assign new position 
     for (let i = 0; i < particles.length; i++) {
-
         const b = particles[i];
 
         b.go(particles, [], mouseWorld);
@@ -478,9 +477,6 @@ function updateParticles(
     }
 
     geometry.attributes.position.needsUpdate = true;
-
-
-
 }
 
 
