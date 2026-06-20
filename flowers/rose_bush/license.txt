@@ -1,0 +1,11 @@
+Model Information:
+* title:	Rose Bush - Detailed
+* source:	https://sketchfab.com/3d-models/rose-bush-detailed-f4d81ec952d04452a2f8421985875e56
+* author:	ramakarl (https://sketchfab.com/ramakarl)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Rose Bush - Detailed" (https://sketchfab.com/3d-models/rose-bush-detailed-f4d81ec952d04452a2f8421985875e56) by ramakarl (https://sketchfab.com/ramakarl) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

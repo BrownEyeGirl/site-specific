@@ -307,9 +307,9 @@ scene.background = new THREE.Color(0x000080);
 
 
 /* AMBIENT LIGHT FOR THE FLOWER FIELD */ 
-const light = new THREE.AmbientLight( 0x00FF59, 1 ); // soft white light
-light.distance = 500; 
-scene.add( light );
+const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
+directionalLight.position.set(5, 10, 7.5);
+scene.add(directionalLight);
 
 const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 1, 2000);
 camera.position.z = 300;
@@ -319,10 +319,10 @@ renderer.setSize(innerWidth, innerHeight);
 document.body.appendChild(renderer.domElement);
 
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.autoRotate= true; 
+//controls.autoRotate= true; 
 
 controls.minDistance = 10;   // How close you can zoom in
-controls.maxDistance = 300;  // How far you can zoom out
+controls.maxDistance = 800;  // How far you can zoom out
 
 /* EFFECTS */ 
 let anaglyph = new AnaglyphEffect( renderer );
@@ -342,8 +342,8 @@ const flowers = [];
 
 /* LOAD IN MODELS */
 loadFacade(); 
-createWildFlowers("flowers/sunflower/scene.gltf", 150);  // ukrane/polish 
-createWildFlowers("flowers/bluebell/scene.gltf", 750);  // ukrane/polish 
+createWildFlowers("flowers/rose_bush/scene.gltf", 34);  // ukrane/polish 
+//createWildFlowers("flowers/bluebell/scene.gltf", 750);  // ukrane/polish 
 
 //loadFacadePoints(); 
 
@@ -705,6 +705,8 @@ function createWildFlowers(url, c) {
 
     loader.load(url, (gltf) => {
 
+      
+
         let flowerMesh = null;
 
         gltf.scene.traverse((obj) => {
@@ -764,5 +766,17 @@ function createWildFlowers(url, c) {
         scene.add(flowers);
 
         console.log(`Created ${count} flower instances`);
+
+        console.log(
+    "Vertices:",
+    flowerMesh.geometry.attributes.position.count
+);
+
+console.log(
+    "Triangles:",
+    flowerMesh.geometry.index
+        ? flowerMesh.geometry.index.count / 3
+        : flowerMesh.geometry.attributes.position.count / 3
+);
     });
 }

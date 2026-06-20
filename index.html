@@ -47,12 +47,34 @@
 
 <script src="https://threejs.org/build/three.min.js"></script>
  <script type="module" src="boid.js" id="appScript"></script>
+
+ <script>
+      // Function to trigger the audio file
+    function playOnInteraction() {
+      const audio = document.getElementById("bg-audio");
+      
+      audio.play()
+        .then(() => {
+          // Remove the event listener so it doesn't trigger again on subsequent clicks
+          window.removeEventListener('click', playOnInteraction);
+        })
+        .catch(error => {
+          console.log("Playback failed or was prevented:", error);
+        });
+    }
+
+    // Listen for a click anywhere on the page
+    window.addEventListener('click', playOnInteraction);
+
+ </script>
 </head>
   <body style="background-color: white;">
     <div class="ui-overlay" >
       <h1>CONTAMINATION: </h1>
-      <p><b>/adjective/</b> <br>something unfit for use by the introduction of undesirable elements. 
-</p>
+      <p><b>/adjective/</b> <br>something unfit for use by the introduction of undesirable elements. </p>
+      <p style="color:gray">(click to play audio)</p>
+       <audio id="bg-audio" src="items/BirdSounds_316Bridge.mp3"></audio>
+
     </div>
   </body>
 </html>
