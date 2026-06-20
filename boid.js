@@ -585,7 +585,7 @@ async function loadFacade() {
 }
 
 /* LOAD IN LIDAR SCAN */ 
-async function loadFacadePoints() {
+ function loadFacadePoints() {
     const loader = new GLTFLoader();
 
     // facade 
@@ -716,7 +716,7 @@ function zoomOut() {
 
 
 /* PERLIN NOISE FOR FLOWERS */ 
-function createWildFlowers(url, c, s) {
+async function createWildFlowers(url, c, s) {
   const noise2D = createNoise2D(); // generate the perlin noise
 
 const loader = new GLTFLoader(); // loader for all of the gltf files 
