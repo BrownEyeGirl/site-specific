@@ -4,7 +4,11 @@
  * 
  * CREDITS: 
  * flocking code derived from https://github.com/jackaperkins/boids/blob/master/Boid.pde
- * 
+ * flowers1: https://sketchfab.com/3d-models/linen-with-flowers-91c24ace2e7d412493299f43dfa0061f
+ * daisy: https://sketchfab.com/3d-models/flower-0a0f5b4e595940649ea3cabeb7a4b1e1
+ * clover: https://sketchfab.com/3d-models/low-poly-shrub-or-grass-clover-acb337dd8f5e41beba654111e3f2475a
+ * lily: https://sketchfab.com/3d-models/low-poly-flowers-96a8320dd0e24ab8b2e7d2712eb66b64
+ * sunflower: https://sketchfab.com/3d-models/sunflower-low-poly-0615fb09b7cd424d99d89f7c6e35eec3#download
  */
 
 
@@ -307,7 +311,7 @@ scene.background = new THREE.Color(0x000080);
 
 
 /* AMBIENT LIGHT FOR THE FLOWER FIELD */ 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
+const directionalLight = new THREE.DirectionalLight(0xffffff, 10);
 directionalLight.position.set(5, 10, 7.5);
 scene.add(directionalLight);
 
@@ -342,8 +346,22 @@ const flowers = [];
 
 /* LOAD IN MODELS */
 loadFacade(); 
-createWildFlowers("flowers/rose_bush/scene.gltf", 34);  // ukrane/polish 
-//createWildFlowers("flowers/bluebell/scene.gltf", 750);  // ukrane/polish 
+
+// flowers : link, amount, size
+/** FLOWERS
+ * breakdown: 
+ * italian -> 750, lily (model has 4),  188 generated
+ * british/irish -> 375, shamrock (model has 12), 31 generated
+ * french can -> 225, daisy (3 flowers per model), 75 generated
+ * polish/ukraine -> 150
+ */
+createWildFlowers("flowers/lily.glb", 188, 130); // italian
+createWildFlowers("flowers/clover.glb", 31, 90); // british/irish
+createWildFlowers("flowers/daisy.glb", 75, 0.4); // french can 
+createWildFlowers("flowers/sunflower.glb", 150, 37);  // polish/ukrain
+
+
+
 
 //loadFacadePoints(); 
 
@@ -698,85 +716,46 @@ function zoomOut() {
 
 
 /* PERLIN NOISE FOR FLOWERS */ 
-function createWildFlowers(url, c) {
+function createWildFlowers(url, c, s) {
+  const noise2D = createNoise2D(); // generate the perlin noise
 
-    const noise2D = createNoise2D();
-    const loader = new GLTFLoader();
+const loader = new GLTFLoader(); // loader for all of the gltf files 
 
-    loader.load(url, (gltf) => {
+loader.load(url, function(gltf) {
 
-      
+const baseFlower = gltf.scene;
+baseFlower.scale.set(1, 1, 1);
 
-        let flowerMesh = null;
+const size = 400;
+const half = size / 2;
 
-        gltf.scene.traverse((obj) => {
-            if (obj.isMesh && !flowerMesh) {
-                flowerMesh = obj;
-            }
-        });
+// increase this for density
+const count = c;
 
-        if (!flowerMesh) {
-            console.error("No mesh found in flower model.");
-            return;
-        }
+for (let i = 0; i < count; i++) {
 
-        const count = c;
-        const size = 800;
+  // 🎯 square distribution
+  const x = (Math.random() - 0.5) * size;
+  const z = (Math.random() - 0.5) * size;
 
-        const flowers = new THREE.InstancedMesh(
-            flowerMesh.geometry,
-            flowerMesh.material,
-            count
-        );
+  // noise filter (controls clustering)
+  const n = noise2D(x * 0.03, z * 0.03);
 
-        flowers.castShadow = true;
-        flowers.receiveShadow = true;
+  if (n > 0.1) { // lower threshold = more flowers, dont generate if on the car
+    const flower = baseFlower.clone(true); // 
 
-        const dummy = new THREE.Object3D();
+    flower.position.set(x-30, -110, z+180);
 
-        let index = 0;
+    // variation (makes it look natural)
+    //const s = 15 + Math.random() * 10;
+    flower.scale.set(s, s, s);
 
-        while (index < count) {
+    flower.rotation.y = Math.random() * Math.PI * 2;
 
-            const x = (Math.random() - 0.5) * size;
-            const z = (Math.random() - 0.5) * size;
+    scene.add(flower);
+    flowers.push(flower);
+  }
+}
+}); 
 
-            const n = noise2D(x * 0.03, z * 0.03);
-
-            if (n > 0.1) {
-
-                dummy.position.set(x, -100, z);
-
-                const s = 15 + Math.random() * 0.6;
-                dummy.scale.set(s, s, s);
-
-                dummy.rotation.x =  -Math.PI * 0.5;
-                //dummy.rotation.y = -Math.PI ;
-
-                dummy.updateMatrix();
-
-                flowers.setMatrixAt(index, dummy.matrix);
-
-                index++;
-            }
-        }
-
-        flowers.instanceMatrix.needsUpdate = true;
-
-        scene.add(flowers);
-
-        console.log(`Created ${count} flower instances`);
-
-        console.log(
-    "Vertices:",
-    flowerMesh.geometry.attributes.position.count
-);
-
-console.log(
-    "Triangles:",
-    flowerMesh.geometry.index
-        ? flowerMesh.geometry.index.count / 3
-        : flowerMesh.geometry.attributes.position.count / 3
-);
-    });
 }
